@@ -166,7 +166,7 @@ menu
 IPVPS=$(curl -s ipinfo.io/ip )
 ISPVPS=$( curl -s ipinfo.io/org )
 ttoday="$(vnstat | grep today | awk '{print $8" "substr ($9, 1, 3)}' | head -1)"
-tmon="$(vnstat -m | grep `date +%G-%m` | awk '{print $8" "substr ($9, 1 ,3)}' | head -1)"
+tmon="$(vnstat -m | grep `date | awk '{print $8" "substr ($9, 1 ,3)}' | head -1)"
 clear
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
 echo -e "\E[39;1;92m                   ⇱ SCRIPT PREMIUM BY ANDY YUDA⇲             \E[0m"
@@ -182,8 +182,7 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "\E[39;1;92m                    ⇱ STATUS SERVICE ⇲                        \E[0m"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
 echo -e "${BICyan}┌──────────────────────────────────────────────────┐${NC}"
-echo -e "${BICyan} NGINX ${NC}: ${GREEN}$resngx         ${BICyan} WEBSOCKET ${NC}: ${GREEN}ON"
-echo -e "${BICyan} XRAY  ${NC}: ${GREEN}$resv2r         ${BICyan} DROPBEAR ${NC}: ${GREEN}ON"
+echo -e "${BICyan} XRAY  ${NC}: ${GREEN}$resv2r  ${BICyan} NGINX ${NC}: ${GREEN}$resngx  ${BICyan} WEBSOCKET ${NC}: ${GREEN}ON"
 echo -e "${BICyan}└──────────────────────────────────────────────────┘${NC}"
 
 echo -e "${GREEN}┌──────────────────────────────────────────────────┐${NC}"
@@ -222,7 +221,7 @@ datediff() {
     d2=$(date -d "$2" +%s)
     echo -e " ${BICyan}│$NC  Expiry In     : $(( (d1 - d2) / 86400 )) Days $NC"
 }
-mai="datediff "$Exp" "$DATE""
+mai="$Exp"
 echo -e " ${BICyan}┌─────────────────────────────────────┐${NC}"
 echo -e " ${BICyan}│  Version       : Last Update${NC}"
 echo -e " ${BICyan}│  User          : $Name"
