@@ -13,11 +13,27 @@ let ssa=$ssx/2
 COLOR1='\033[0;35m'
 COLOR2='\033[0;39m'
 clear
-# // Exporting Language to UTF-8
-export LC_ALL='en_US.UTF-8'
-export LANG='en_US.UTF-8'
-export LANGUAGE='en_US.UTF-8'
-export LC_CTYPE='en_US.utf8'
+
+BIBlack='\033[1;90m'      # Black
+BIRed='\033[1;91m'        # Red
+BIGreen='\033[1;92m'      # Green
+BIYellow='\033[1;93m'     # Yellow
+BIBlue='\033[1;94m'       # Blue
+BIPurple='\033[1;95m'     # Purple
+BICyan='\033[1;96m'       # Cyan
+BIWhite='\033[1;97m'      # White
+UWhite='\033[4;37m'       # White
+On_IPurple='\033[0;105m'  #
+On_IRed='\033[0;101m'
+IBlack='\033[0;90m'       # Black
+IRed='\033[0;91m'         # Red
+IGreen='\033[0;92m'       # Green
+IYellow='\033[0;93m'      # Yellow
+IBlue='\033[0;94m'        # Blue
+IPurple='\033[0;95m'      # Purple
+ICyan='\033[0;96m'        # Cyan
+IWhite='\033[0;97m'       # White
+NC='\e[0m'
 
 # // Export Color & Information
 export RED='\033[0;31m'
@@ -43,105 +59,200 @@ export WARNING="${RED}\e[5m"
 export UNDERLINE="\e[4m"
 
 # // Exporting URL Host
-export Server_URL="autosc.me/aio"
+export Server_URL="raw.githubusercontent.com/Zeastore/test/main"
+export Server1_URL="raw.githubusercontent.com/Zeastore/limit/main"
 export Server_Port="443"
 export Server_IP="underfined"
 export Script_Mode="Stable"
-export Auther="XdrgVPN"
-
-# // Root Checking
-if [ "${EUID}" -ne 0 ]; then
-                echo -e "${EROR} Please Run This Script As Root User !"
-                exit 1
-fi
-tomem="$(free | awk '{print $2}' | head -2 | tail -n 1 )"
-usmem="$(free | awk '{print $3}' | head -2 | tail -n 1 )"
-cpu1="$(mpstat | awk '{print $4}' | head -4 |tail -n 1)"
-cpu2="$(mpstat | awk '{print $6}' | head -4 |tail -n 1)"
-
-persenmemori="$(echo "scale=2; $usmem*100/$tomem" | bc)"
-#persencpu=
-persencpu="$(echo "scale=2; $cpu1+$cpu2" | bc)"
-# // Exporting IP Address
+export Auther=".geovpn"
 export MYIP=$( curl -s https://ipinfo.io/ip/ )
 Name=$(curl -sS https://raw.githubusercontent.com/rehanvip/permission/main/ip | grep $MYIP | awk '{print $2}')
 Exp=$(curl -sS https://raw.githubusercontent.com/rehanvip/permission/main/ip | grep $MYIP | awk '{print $3}')
 
-# // nginx
-nginx=$( systemctl status nginx | grep Active | awk '{print $3}' | sed 's/(//g' | sed 's/)//g' )
-if [[ $nginx == "running" ]]; then
-    status_nginx="${GREEN}ON${NC}"
-else
-    status_nginx="${RED}OFF${NC}"
+# // Root Checking
+if [ "${EUID}" -ne 0 ]; then
+		echo -e "${EROR} Please Run This Script As Root User !"
+		exit 1
 fi
 
-# // SSH Websocket Proxy
-xray=$(/etc/init.d/ssh status | grep Active | awk '{print $3}' | cut -d "(" -f2 | cut -d ")" -f1)
-if [[ $xray == "running" ]]; then
-    status_xray="${GREEN}ON${NC}"
+# // Exporting IP Address
+export IP=$( curl -s https://ipinfo.io/ip/ )
+
+# TOTAL RAM
+total_ram=` grep "MemTotal: " /proc/meminfo | awk '{ print $2}'`
+totalram=$(($total_ram/1024))
+
+# // Exporting Network Interface
+export NETWORK_IFACE="$(ip route show to default | awk '{print $5}')"
+
+# // Clear
+clear
+clear && clear && clear
+clear;clear;clear
+cek=$(service ssh status | grep active | cut -d ' ' -f5)
+if [ "$cek" = "active" ]; then
+stat=-f5
 else
-    status_xray="${RED}OFF${NC}"
+stat=-f7
 fi
+ngx=$(service nginx status | grep active | cut -d ' ' $stat)
+if [ "$ngx" = "active" ]; then
+resngx="${green}ON${NC}"
+else
+resngx="${red}OFF${NC}"
+fi
+v2r=$(service xray status | grep active | cut -d ' ' $stat)
+if [ "$v2r" = "active" ]; then
+resv2r="${green}ON${NC}"
+else
+resv2r="${red}OFF${NC}"
+fi
+function addhost(){
+clear
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo ""
+read -rp "Domain/Host: " -e host
+echo ""
+if [ -z $host ]; then
+echo "????"
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+read -n 1 -s -r -p "Press any key to back on menu"
+setting-menu
+else
+rm -fr /etc/xray/domain
+echo "IP=$host" > /var/lib/scrz-prem/ipvps.conf
+echo $host > /etc/xray/domain
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo "Dont forget to renew gen-ssl"
+echo ""
+read -n 1 -s -r -p "Press any key to back on menu"
+menu
+fi
+}
+function genssl(){
+clear
+systemctl stop nginx
+systemctl stop xray
+domain=$(cat /var/lib/scrz-prem/ipvps.conf | cut -d'=' -f2)
+Cek=$(lsof -i:80 | cut -d' ' -f1 | awk 'NR==2 {print $1}')
+if [[ ! -z "$Cek" ]]; then
+sleep 1
+echo -e "[ ${red}WARNING${NC} ] Detected port 80 used by $Cek " 
+systemctl stop $Cek
+sleep 2
+echo -e "[ ${green}INFO${NC} ] Processing to stop $Cek " 
+sleep 1
+fi
+echo -e "[ ${green}INFO${NC} ] Starting renew gen-ssl... " 
+sleep 2
+/root/.acme.sh/acme.sh --upgrade
+/root/.acme.sh/acme.sh --upgrade --auto-upgrade
+/root/.acme.sh/acme.sh --set-default-ca --server letsencrypt
+/root/.acme.sh/acme.sh --issue -d $domain --standalone -k ec-256
+~/.acme.sh/acme.sh --installcert -d $domain --fullchainpath /etc/xray/xray.crt --keypath /etc/xray/xray.key --ecc
+echo -e "[ ${green}INFO${NC} ] Renew gen-ssl done... " 
+sleep 2
+echo -e "[ ${green}INFO${NC} ] Starting service $Cek " 
+sleep 2
+echo $domain > /etc/xray/domain
+systemctl start nginx
+systemctl start xray
+echo -e "[ ${green}INFO${NC} ] All finished... " 
+sleep 0.5
+echo ""
+read -n 1 -s -r -p "Press any key to back on menu"
+menu
+}
+IPVPS=$(curl -s ipinfo.io/ip )
+ISPVPS=$( curl -s ipinfo.io/org )
 ttoday="$(vnstat | grep today | awk '{print $8" "substr ($9, 1, 3)}' | head -1)"
 tmon="$(vnstat -m | grep `date +%G-%m` | awk '{print $8" "substr ($9, 1 ,3)}' | head -1)"
-
 clear
-echo -e "$COLOR1┌────────────────────────────────────────────────────────────┐${NC}"
-echo -e "                     << INFORMASI VPS >>                    \E[0m"
-echo -e "$COLOR1└────────────────────────────────────────────────────────────┘${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
+echo -e "\E[39;1;92m                   ⇱ SCRIPT PREMIUM BY REHAN⇲             \E[0m"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
+echo -e "${BICyan} XRAY  ${NC}: ${GREEN}$resv2r  ${BICyan} NGINX ${NC}: ${GREEN}$resngx  ${BICyan} SSH ${NC}: ${GREEN}ON
+echo -e "${BICyan} "   
+echo -e "${BICyan}┌──────────────────────────────────────────────────┐${NC}"
+echo -e "${BICyan} ⇲  ${BICyan}Use Core        :  ${BIYellow}Xray-core"    
+echo -e "${BICyan} ⇲  ${BICyan}Current Domain  :  ${BIYellow}$(cat /etc/xray/domain)${NC}" 
+echo -e "${BICyan} ⇲  ${BICyan}NS Domain       :  $(cat /root/nsdomain)"
+echo -e "${BICyan} ⇲  ${BICyan}IP-VPS          :  ${BIYellow}$IPVPS${NC}"                  
+echo -e "${BICyan} ⇲  ${BICyan}ISP-VPS         :  ${BIYellow}$ISPVPS${NC}"
+echo -e "${BICyan} ⇲  ${BICyan}TOTAL RAM       :  ${BIYellow}${totalram}MB"
+echo -e "${BICyan}└──────────────────────────────────────────────────┘${NC}"
 
-echo -e "• Current Time        = $( date -d "0 days" +"%d-%m-%Y | %X" )"
-echo -e "• Current Domain      = $( cat /etc/xray/domain )"
-echo -e "• Server IP           = $MYIP"
-echo -e "• ISP                 = $(cat /root/.isp)${NC}"
-echo -e "• Server Resource     = RAM = $persenmemori% | CPU = $persencpu%"
-echo -e "• Clients Name        = $Name"
-echo -e "• Expired Script VPS  = $Exp"
-echo -e "• Status Hari ini     = jangan lupa bahagia"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
+echo -e "\E[39;1;92m STATUS HARI INI  :  ⇱ Tetap Tersenyum ⇲             \E[0m"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
+
+echo -e "${GREEN}┌──────────────────────────────────────────────────┐${NC}"
+echo -e "${GREEN}│  \033[0m ${BOLD}${YELLOW}SSH     VMESS       VLESS      TROJAN       SHADOWSOCKS$NC  $COLOR1"
+echo -e "${GREEN}│  \033[0m ${Blue} $ssh1        $vma           $vla          $tra               $ssa   $NC"
+echo -e "${GREEN}└──────────────────────────────────────────────────┘${NC}"
+
+echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "\E[39;1;92m                    ⇱ STATUS PENGUNAAN ⇲                        \E[0m"
+echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${LIGHT} Monthly: $tmon"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
+echo -e "\E[39;1;92m                     ⇱ MENU SERVICE ⇲                         \E[0m"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
 echo -e ""
-echo -e "$COLOR1┌────────────────────────────────────────────────────────────┐${NC}"
-echo -e " ${COLOR2}[ SSH WebSocket${NC}: ${GREEN}ON ${NC}]  [ NGINX${NC}: ${status_nginx} ] ${COLOR2}[ Today  : $ttoday ]"
-echo -e " [ XRAY${NC}         : ${status_xray} ]                ${COLOR2}[ Monthly: $tmon ]"
-echo -e "$COLOR1┌────────────────────────────────────────────────────────────┐${NC}"
-echo -e "$COLOR1│  \033[0m ${BOLD}${YELLOW}SSH     VMESS       VLESS      TROJAN       SHADOWSOCKS$NC  $COLOR1│"
-echo -e "$COLOR1│  \033[0m ${Blue} $ssh1        $vma           $vla          $tra               $ssa   $NC    $COLOR1│"
-echo -e "$COLOR1└────────────────────────────────────────────────────────────┘${NC}"
-echo -e "      $COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
-echo -e "      $COLOR1│${NC}                 •  Andyyuda  •                  $COLOR1│$NC"
-echo -e "      $COLOR1└─────────────────────────────────────────────────┘${NC}" 
+echo -e " ${BICyan}[${BIWhite}01${BICyan}]${RED} •${NC} ${YELLOW}SSH MENU        $NC  ${BICyan}[${BIWhite}12${BICyan}]${RED} • ${NC}${YELLOW}GEN-SSL / CERTV $NC"
+echo -e " ${BICyan}[${BIWhite}02${BICyan}]${RED} •${NC} ${YELLOW}VMESS MENU      $NC  ${BICyan}[${BIWhite}13${BICyan}]${RED} • ${NC}${YELLOW}BANNER CHAGE $NC"
+echo -e " ${BICyan}[${BIWhite}03${BICyan}]${RED} •${NC} ${YELLOW}VLESS MENU      $NC  ${BICyan}[${BIWhite}14${BICyan}]${RED} • ${NC}${YELLOW}CEK RUNNING SERVICE $NC"
+echo -e " ${BICyan}[${BIWhite}04${BICyan}]${RED} •${NC} ${YELLOW}TROJAN MENU     $NC  ${BICyan}[${BIWhite}15${BICyan}]${RED} • ${NC}${YELLOW}CEK TRAFIC $NC"
+echo -e " ${BICyan}[${BIWhite}05${BICyan}]${RED} •${NC} ${YELLOW}S-SOCK MENU     $NC  ${BICyan}[${BIWhite}16${BICyan}]${RED} • ${NC}${YELLOW}SPEEDTEDT  $NC"
+echo -e " ${BICyan}[${BIWhite}06${BICyan}]${RED} •${NC} ${YELLOW}MENU BACKUP     $NC  ${BICyan}[${BIWhite}17${BICyan}]${RED} • ${NC}${YELLOW}CEK BANDWIDTH USE $NC"
+echo -e " ${BICyan}[${BIWhite}07${BICyan}]${RED} •${NC} ${YELLOW}AUTO REBOOT     $NC  ${BICyan}[${BIWhite}18${BICyan}]${RED} • ${NC}${YELLOW}LIMMIT SPEED $NC"
+echo -e " ${BICyan}[${BIWhite}08${BICyan}]${RED} •${NC} ${YELLOW}REBOOT          $NC  ${BICyan}[${BIWhite}19${BICyan}]${RED} • ${NC}${YELLOW}WEBMIN $NC"
+echo -e " ${BICyan}[${BIWhite}09${BICyan}]${RED} •${NC} ${YELLOW}RESTART SERVICE $NC  ${BICyan}[${BIWhite}20${BICyan}]${RED} • ${NC}${YELLOW}SCRIPT INFO $NC"
+echo -e " ${BICyan}[${BIWhite}10${BICyan}]${RED} •${NC} ${YELLOW}TRIAL           $NC  ${BICyan}[${BIWhite}21${BICyan}]${RED} • ${NC}${YELLOW}CLEAR LOG $NC"
+echo -e " ${BICyan}[${BIWhite}11${BICyan}]${RED} •${NC} ${YELLOW}ADD HOST        $NC  ${BICyan}[${BIWhite}22${BICyan}]${RED} • ${NC}${YELLOW}FIX MISSING POINTING $NC"
+echo -e " ${BICyan}[${BIWhite} X ${BICyan}] TYPE X FOR EXIT ${BICyan}${BIYellow}${BICyan}${NC}"  
+echo -e " ${RED}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
+
+echo -e "${BICyan}┌──────────────────────────────────────────────────┐${NC}"
+echo -e "${BICyan}│ ${BOLD}${BLUE}Client    = $Name                           ${NC}"
+echo -e "${BICyan}│ ${BOLD}${BLUE}Expired   = $Exp                            ${NC}"
+echo -e "${BICyan}│ ${BOLD}${BLUE}Developer = rehan                       ${NC}"
+echo -e "${BICyan}│ ${BOLD}${RED}Version   = 1.0.0 LTS                       ${NC}"
+echo -e "${BICyan}└──────────────────────────────────────────────────┘${NC}"
+
+echo
+read -p " Select menu : " opt
 echo -e ""
-echo -e " ${CYAN}[01]${NC} • [SSH MENU${NC}]${CYAN}[08]${NC} • [INSTALL ADS-BLOCK${NC}]${CYAN}[15]${NC} • [RUNNING${NC}]"
-echo -e " ${CYAN}[02]${NC} • [VMESS${NC}]   ${CYAN}[09]${NC} • [ADS-BLOCK MENU${NC}]   ${CYAN}[16]${NC} • [SPEEDTEST${NC}]"
-echo -e " ${CYAN}[03]${NC} • [VLESS${NC}]   ${CYAN}[10]${NC} • [CEK-TRAFIK${NC}]       ${CYAN}[17]${NC} • [INFO${NC}]"
-echo -e " ${CYAN}[04]${NC} • [TROJAN${NC}]  ${CYAN}[11]${NC} • [CEK BANDWIDTH${NC}]    ${CYAN}[18]${NC} • [CLEARLOG${NC}]"
-echo -e " ${CYAN}[05]${NC} • [SSWS ${NC}]   ${CYAN}[12]${NC} • [UPDATE-SCRIPT${NC}]    ${CYAN}[19]${NC} • [REBOOT${NC}]"
-echo -e " ${CYAN}[06]${NC} • [ADD-HOST${NC}]${CYAN}[13]${NC} • [RESTART SERVICE${NC}]     "
-echo -e " ${CYAN}[07]${NC} • [GEN-CERT${NC}]${CYAN}[14]${NC} • [AUTO-POINTING${NC}] "
-echo -e "$COLOR1└────────────────────────────────────────────────────────────┘${NC}"
-echo -e " [X]${NC} • [PRESS X TO EXIT]"
-echo -e ""
-echo -ne " Select menu : "; read opt
 case $opt in
 1) clear ; menu-ssh ;;
-2) clear ; menuv ;;
-3) clear ; menul ;;
-4) clear ; menut ;;
-5) clear ; menus ;;
-6) clear ; add-host ;;
-7) clear ; genssl ;;
-8) clear ; rm -rf /usr/local/sbin/helium && wget -q -O /usr/local/sbin/helium https://raw.githubusercontent.com/abidarwish/helium/main/helium.sh && chmod +x /usr/local/sbin/helium && helium ;;
-9) clear ; helium ;;
-10) clear ; cek-trafik ;;
-11) clear ; cek-bandwidth ;;
-12) clear ; updatsc ;;
-13) clear ; restartsc ;;
-14) clear ; domaingratis ;;
-15) clear ; running ;;
+2) clear ; menu-vmess ;;
+3) clear ; menu-vless ;;
+4) clear ; menu-trojan ;;
+5) clear ; menu-ss ;;
+6) clear ; menu-backup ;;
+7) clear ; autoreboot ;;
+8) clear ; reboot ;;
+9) clear ; restart ;;
+10) clear ; trialssh ;;
+11) clear ; addhost ;;
+12) clear ; genssl ;;
+13) clear ; nano /etc/issue.net ;;
+14) clear ; running ;;
+15) clear ; cek-trafik ;;
 16) clear ; cek-speed ;;
-17) clear ; cat /root/log-install.txt ;;
-18) clear ; clearlog ;;
-19) clear ; reboot ;;
+17) clear ; cek-bandwidth ;;
+#18) clear ; cek-ram ;;
+18) clear ; limit-speed ;;
+19) clear ; wbm ;;
+20) clear ; cat /root/log-install.txt ;;
+21) clear ; clearlog ;;
+#99) clear ; update ;;
+22) clear ; fix ;;
+
 0) clear ; menu ;;
 x) exit ;;
-*) clear ; menu ;;
+*) echo -e "" ; echo "Press any key to back exit" ; sleep 1 ; ./menu ;;
 esac
